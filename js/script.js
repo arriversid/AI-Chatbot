@@ -48,7 +48,7 @@ const generateBotResponse = async (incomingMsgDiv) => {
 };
 
 const handleMsg = (e) => {
-  e.preventDefault;
+  e.preventDefaul();
 
   userData.message = msgInput.value.trim();
   msgInput.value = "";
