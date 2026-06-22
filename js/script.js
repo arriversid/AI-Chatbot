@@ -4,7 +4,7 @@ const msgInput = document.querySelector(".msg-input");
 const chatBody = document.querySelector(".bodyy");
 const sendMsgBtn = document.querySelector(".chat-form .controls button");
 
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${API_KEY}`;
+const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${API_KEY}`;
 
 const userData = {
   message: null,
