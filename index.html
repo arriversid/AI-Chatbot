@@ -1,43 +1,76 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" />
-    <title>Chat with Alan</title>
-    <link rel="stylesheet" href="style.css" />
-    <script type="module" src="./js/script.js"></script>
-  </head>
-  <body>
-    <div class="chatbot">
-      <div class="header">
-        <div class="header-info">
-          <img src="./images/icon-ai.png" alt="" />
-          <h2>Chat with Alan</h2>
-        </div>
-      </div>
+const msgInput = document.querySelector(".msg-input");
+const chatBody = document.querySelector(".bodyy");
+const sendMsgBtn = document.querySelector(".chat-form .controls button");
 
-      <div class="bodyy">
-        <div class="message bot-msg">
-          <img id="chatbot-icon" src="./images/icon-ai.png" alt="" />
-          <div class="text">
-            Wassup! <br />
-            How can Alan help you today?
-          </div>
-        </div>
-      </div>
+// 改成呼叫自己的 Netlify function，不再暴露 API key
+const API_URL = "/.netlify/functions/chat";
 
-      <div class="footer">
-        <form action="#" class="chat-form">
-          <textarea
-            placeholder="Type here..."
-            class="msg-input"
-            required
-          ></textarea>
-          <div class="controls">
-            <button type="submit">Send</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </body>
-</html>
+const userData = {
+  message: null,
+};
+
+const createMsgEl = (content, ...classes) => {
+  const div = document.createElement("div");
+  div.classList.add("message", ...classes);
+  div.innerHTML = content;
+  return div;
+};
+
+const generateBotResponse = async (incomingMsgDiv) => {
+  const messageEl = incomingMsgDiv.querySelector(".text");
+
+  const requestOptions = {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: userData.message }),
+  };
+
+  try {
+    const resp = await fetch(API_URL, requestOptions);
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || "請求失敗");
+    messageEl.innerText = data.reply;
+  } catch (err) {
+    messageEl.innerText = err.message;
+  } finally {
+    incomingMsgDiv.classList.remove("thinking");
+    chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
+  }
+};
+
+const handleMsg = (e) => {
+  e.preventDefault();
+  userData.message = msgInput.value.trim();
+  if (!userData.message) return;
+
+  msgInput.value = "";
+  const content = `<div class="text"></div>`;
+  const outgoingMsgDiv = createMsgEl(content, "user-msg");
+  outgoingMsgDiv.querySelector(".text").textContent = userData.message;
+  chatBody.append(outgoingMsgDiv);
+  chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
+
+  setTimeout(() => {
+    const content = `<img id="chatbot-icon" src="./images/icon-ai.png" alt="">
+                <div class="text">
+                    <div class="thinking-indicator">
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                    </div>
+                </div>`;
+    const incomingMsgDiv = createMsgEl(content, "bot-msg", "thinking");
+    chatBody.append(incomingMsgDiv);
+    chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
+    generateBotResponse(incomingMsgDiv);
+  }, 600);
+};
+
+msgInput.addEventListener("keydown", (e) => {
+  const userMsg = e.target.value.trim();
+  if (e.key === "Enter" && userMsg) {
+    handleMsg(e);
+  }
+});
+
+sendMsgBtn.addEventListener("click", (e) => handleMsg(e));
